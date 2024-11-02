@@ -1,0 +1,4630 @@
+openapi: 3.0.3
+info:
+  title: LorrySwap API - OpenAPI 3.0
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: fernandowkd.21@itfac.mrt.ac.lk
+  version: 1.0.11
+servers:
+  - url: https://lorryswapbackendtest2.azurewebsites.net  
+
+tags:
+  - name: User
+    description: represent every user except driver
+  - name: Driver
+    description: Everything about drivers
+  - name: Admin
+    description: The one who handel and maintain the system 
+  - name: Owner  
+    description: The one who own the maintain the system 
+  - name: Cargo Finder
+    description: Everything about cargo finder
+  - name: Report
+    description: Analytical dashboard
+  - name: Admin Dashboard
+    description: The one who handle and maintain the system
+
+    
+paths:
+  /user/createacc:
+    post:
+      tags:
+        - User
+      summary: Create user
+      description: Register a new user with their personal information. This can only be done during user signup.
+      operationId: user.create_user
+      requestBody:
+        required: true
+        description: User registration details.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: OTP sent to user's email. Please verify to complete registration.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "OTP sent to your email. Please verify to complete registration."
+        '400':
+          description: Invalid input supplied.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid input - Email format is incorrect."
+        '500':
+          description: Internal Server Error - Error during the process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error. Please try again later."
+  
+  /user/verify_otp:
+    post:
+      tags:
+        - User
+      summary: Verify OTP
+      description: Verify the OTP sent to the user's email to complete the registration process.
+      operationId: user.verify_otp
+      requestBody:
+        required: true
+        description: OTP verification details.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: michelstarc@example.com
+                otp:
+                  type: integer
+                  example: 123456
+      responses:
+        '200':
+          description: User created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User created successfully."
+        '400':
+          description: Invalid input or OTP.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email and OTP are required."
+        '409':
+          description: Conflict - Username or email already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Conflict - Email already exists."
+        '500':
+          description: Internal Server Error - Error during the process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error. Please try again later."
+    
+  
+  /user/login_user:
+    post:
+      tags:
+        - User
+      summary: User Login
+      description: Authenticate user and return JWT token including roles.
+      operationId: user.login_user
+      requestBody:
+        required: true
+        description: User login details.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: starc123
+                password:
+                  type: string
+                  format: password
+                  example: 'Password!234'
+      responses:
+        '200':
+          description: Login successful and token returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  message:
+                    type: string
+                    example: "Login Successful"
+        '401':
+          description: Incorrect username or password.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Incorrect username or password"
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User not found"
+        '500':
+          description: Database error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Database error"
+                  error:
+                    type: string
+                    example: "Error details"
+
+  /user/forgot_password:
+    post:
+      tags:
+        - User
+      summary: Forgot Password
+      description: Initiates the forgot password process by sending an OTP to the user's email.
+      operationId: user.forgot_password
+      requestBody:
+        required: true
+        description: Email address of the user who wants to reset the password.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: michelstarc@example.com
+      responses:
+        '200':
+          description: OTP sent to user's email.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "OTP sent to your email. Please verify to reset your password."
+        '400':
+          description: Invalid input supplied.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email is required."
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User with this email does not exist."
+        '500':
+          description: Internal Server Error - Error during the process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error. Please try again later."
+
+
+  /user/reset_password:
+    post:
+      tags:
+        - User
+      summary: Reset Password
+      description: Resets the user's password after verifying the OTP sent to their email.
+      operationId: user.reset_password
+      requestBody:
+        required: true
+        description: OTP verification and new password details.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: michelstarc@example.com
+                otp:
+                  type: integer
+                  example: 123456
+                new_password:
+                  type: string
+                  format: password
+                  example: 'NewPassword!234'
+      responses:
+        '200':
+          description: Password reset successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password reset successfully."
+        '400':
+          description: Invalid input or OTP.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email, OTP, and new password are required."
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User not found."
+        '500':
+          description: Internal Server Error - Error during the process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error. Please try again later."                  
+
+
+
+  /driver/uploadLicense:
+    post:
+      tags:
+        - Driver
+      summary: Upload a driver's license image
+      description: Allows a driver to upload an image of their license. The image is stored in Google Drive.
+      operationId: driver.upload_license
+      security:
+        - jwt: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                licenseImage:
+                  type: string
+                  format: binary
+                  description: The image file of the driver's license.
+      responses:
+        '200':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                    example: License image uploaded successfully.
+                  imageUrl:
+                    type: string
+                    description: URL of the uploaded image on Google Drive.
+                    example: https://drive.google.com/uc?export=view&id=FILE_ID
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message.
+                    example: Invalid file format. Please upload a valid image file.
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message.
+                    example: Unauthorized. Please provide valid credentials.     
+
+  /driver/checkLicense/{userId}:
+    get:
+      tags:
+        - Driver
+      summary: Check if a driver's license is valid
+      description: Checks if the driver's license is valid by analyzing the uploaded image.
+      operationId: driver.check_license
+      security:
+        - jwt: []
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        description: The ID of the user whose license is being checked.
+        schema:
+          type: integer  
+      responses:
+        '200':
+          description: License is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                    example: License is valid.
+        '400':
+          description: License is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message.
+                    example: License is invalid. Please upload a valid license image.
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message.
+                    example: Unauthorized. Please provide valid credentials.                        
+  
+  
+  /driver/saveLicense:
+    post:
+      tags:
+        - Driver
+      summary: Save data to driver table
+      description: Save license image URLs, residence data to the driver table.
+      operationId: driver.save_license_todb
+      security:
+        - jwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: The ID of the user
+                  example: 1
+                residence:
+                  type: string
+                  description: The residence of the driver
+                  example: "123 Main St, Springfield"
+                licence_side1:
+                  type: string
+                  description: URL of the first side of the license image
+                  example: "https://drive.google.com/uc?export=view&id=FILE_ID1"
+                licence_side2:
+                  type: string
+                  description: URL of the second side of the license image
+                  example: "https://drive.google.com/uc?export=view&id=FILE_ID2"
+
+      responses:
+        '200':
+          description: Data saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                    example: Data saved successfully.
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message.
+                    example: Invalid data. Please check the provided information.
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message.
+                    example: Unauthorized. Please provide valid credentials.
+
+
+
+  # /driver/findOptimalPath:
+  #   post:
+  #     tags:
+  #       - Driver
+  #     summary: Find the optimal path for multiple destinations
+  #     description: Calculates the most efficient route passing through all the given stops and ending at the final destination.
+  #     operationId: driver.find_optimal_path
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: object
+  #             properties:
+  #               origin:
+  #                 type: string
+  #                 description: The starting point coordinates in the format 'lat,lng'.
+  #                 example: '40.6655101,-73.89188969999998'
+  #               destination:
+  #                 type: string
+  #                 description: The end point coordinates in the format 'lat,lng'.
+  #                 example: '40.6905615,-73.9976592'
+  #               waypoints:
+  #                 type: array
+  #                 description: An array of waypoint coordinates that the route should pass through (ordered or unordered).
+  #                 items:
+  #                   type: string
+  #                   description: A waypoint coordinates in the format 'lat,lng'.
+  #                   example: '40.6792931,-73.9818577'
+  #             required:
+  #               - origin
+  #               - destination
+  #     responses:
+  #       '200':
+  #         description: Route optimization successful.
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 status:
+  #                   type: string
+  #                   example: success
+  #                 optimal_path:
+  #                   type: array
+  #                   items:
+  #                     type: object
+  #                     properties:
+  #                       location:
+  #                         type: string
+  #                         example: '40.6655101,-73.89188969999998'
+  #                       step:
+  #                         type: integer
+  #                         example: 1
+  #                 total_distance:
+  #                   type: string
+  #                   example: '12.5 km'
+  #                 total_duration:
+  #                   type: string
+  #                   example: '25 mins'
+  #       '400':
+  #         description: Bad request due to invalid input.
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 status:
+  #                   type: string
+  #                   example: failure
+  #                 message:
+  #                   type: string
+  #                   example: Invalid input format for coordinates.
+  #       '401':
+  #         description: Unauthorized request.
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 message:
+  #                   type: string
+  #                   example: Unauthorized. Please provide valid credentials.
+  #       '500':
+  #         description: Internal server error during the optimization process.
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 status:
+  #                   type: string
+  #                   example: error
+  #                 message:
+  #                   type: string
+  #                   example: Internal server error. Please try again later.
+
+  /driver/findOptimalPath:
+    post:
+      tags:
+        - Driver
+      summary: Find the optimal path for multiple destinations
+      description: Calculates the most efficient route passing through all the given stops and ending at the final destination.
+      operationId: driver.find_optimal_path
+      security:
+        - jwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                origin:
+                  type: string
+                  description: The starting point coordinates in the format 'lat,lng'.
+                  example: '40.6655101,-73.89188969999998'
+                destination:
+                  type: string
+                  description: The end point coordinates in the format 'lat,lng'.
+                  example: '40.6905615,-73.9976592'
+                waypoints:
+                  type: object
+                  description: A dictionary of waypoints with order IDs as keys and pickup/drop coordinates as values.
+                  additionalProperties:
+                    type: object
+                    properties:
+                      pickup:
+                        type: string
+                        description: Pickup coordinates in the format 'lat,lng'.
+                        example: '40.6792931,-73.9818577'
+                      drop:
+                        type: string
+                        description: Drop coordinates in the format 'lat,lng'.
+                        example: '40.6886359,-73.9794455'
+              required:
+                - origin
+                - destination
+                - waypoints
+      responses:
+        '200':
+          description: Route optimization successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  optimal_path:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        order_id:
+                          type: string
+                          example: '12345'
+                        location:
+                          type: string
+                          example: '40.6655101,-73.89188969999998'
+                        type:
+                          type: string
+                          example: 'pickup'
+                  total_distance:
+                    type: string
+                    example: '12.5 km'
+                  url:
+                    type: string
+                    example: 'https://www.google.com/maps/dir/40.6655101,-73.89188969999998/40.6792931,-73.9818577/40.6905615,-73.9976592'
+        '400':
+          description: Bad request due to invalid input.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failure
+                  message:
+                    type: string
+                    example: Invalid input format for coordinates.
+        '401':
+          description: Unauthorized request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Please provide valid credentials.
+        '500':
+          description: Internal server error during the optimization process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Internal server error. Please try again later.
+  
+
+  /driver/createRide:
+    post:
+      tags:
+        - Driver
+      summary: Create ride
+      description: This can only be done when driver creates a ride.
+      operationId: ride.create_ride
+      security:
+        - jwt: []
+      requestBody:
+        description: Created ride object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ride'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+        '500':
+          description: Internal Server Error - Error during the process.
+
+  /driver/allRides:
+    get:
+      tags:
+        - Driver
+      summary: Returns a list of rides.
+      description: Optional extended description in CommonMark or HTML
+      operationId: ride.get_all_rides
+      security:
+        - jwt: []
+      responses:
+        '200':
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  type: string
+
+  /driver/current_ride/{userId}:
+    get:
+      tags:
+        - Driver
+      summary: Driver's current ride.
+      description: Optional extended description in CommonMark or HTML
+      operationId: ride.get_current_ride
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the driver.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: JSON data of driver ride details.
+          content:
+            application/json:
+              schema: 
+                type: object
+              
+  /driver/delete_rides/{userId}:
+    delete:
+      tags:
+        - Driver
+      summary: Delete a ride
+      description: Deletes a ride based on the user ID.
+      operationId: ride.delete_ride
+      security:
+        - jwt: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The ID of the user whose ride will be deleted.
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Ride deleted successfully
+        '404':
+          description: Ride not found
+    
+  /driver/suggested_rides/{userId}:
+    get:
+      tags:
+        - Driver
+      summary: Returns a list of suggested rides
+      description: Returns a list of suggested rides
+      operationId: suggestedRide.suggested_ride
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user for whom to retrieve suggested rides.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A JSON array of suggested rides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/suggestedRide'
+
+  /driver/suggested_rides_return/{userId}:
+    get:
+      tags:
+        - Driver
+      summary: Returns a list of suggested rides return
+      description: Returns a list of suggested rides return
+      operationId: suggestedRide.suggested_ride_returns
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user for whom to retrieve suggested rides.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A JSON array of suggested rides return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/suggestedRide'
+
+  /driver/confirm/{userId}:
+    put:
+      tags:
+        - Driver
+      summary: Update a driver confirmation
+      description: Update a ride with new driver's confirmation
+      operationId: confirmRide.update_driver_confirmation
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the driver, who got that rides
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Confirm rides object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/confirmRide'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+  
+  /driver/reject/{userId}:
+    put:
+      tags:
+        - Driver
+      summary: Special Request rejected by driver.
+      description: Special Request rejected by driver.
+      operationId: confirmRide.update_driver_rejection
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the driver, who reject that ride
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Special Request rejected by driver.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/confirmRide'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+  /driver/confirmed_rides/{userId}:
+    get:
+      tags:
+        - Driver
+      summary: Returns a list of confirmed rides by the driver
+      description: Returns a list of confirmed rides by the driver
+      operationId: confirmRide.confirm_ride
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user for whom to retrieve confirmed rides.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A JSON array of confirm rides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/suggestedRide'
+  
+  /driver/special_rides/{userId}:
+    get:
+      tags:
+        - Driver
+      summary: Returns a list of special rides
+      description: Returns a list of special rides
+      operationId: specialRide.special_ride
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user for whom to retrieve special rides.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A JSON array of special rides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/suggestedRide'
+  
+  /driver/search_driver:
+    get:
+      tags:
+        - Driver
+      summary: Returns a list of drivers.
+      description: Optional extended description in CommonMark or HTML
+      operationId: driver.search_driver
+      security:
+        - jwt: []
+      responses:
+        '200':
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  type: string
+
+
+
+  /driver/updateLocation:
+    put:
+      tags:
+        - Driver
+      summary: Update Driver Location
+      description: Updates the current location of the driver. If the driver's location does not exist, it will create a new location record.
+      operationId: driver.updateCurrentLocation
+      security:
+        - jwt: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - driver_id
+                - latitude
+                - longitude
+              properties:
+                driver_id:
+                  type: integer
+                  format: int64
+                  description: Unique identifier for the driver
+                latitude:
+                  type: number
+                  format: float
+                  description: Latitude of the driver's current location
+                longitude:
+                  type: number
+                  format: float
+                  description: Longitude of the driver's current location
+      responses:
+        200:
+          description: Location updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        201:
+          description: Location created successfully for the driver
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+
+
+  /driver/verify_driver/{userId}:
+    get:
+      summary: Verify a driver's status based on their user ID
+      tags:
+        - Driver
+      operationId: driver.verify_driver
+      security:
+        - jwt: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: The unique identifier of the driver
+      responses:
+        '200':
+          description: Driver is verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 'OK'
+        '400':
+          description: Bad request, such as missing user ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'NOK'
+        '404':
+          description: Driver not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'No driver found'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Internal server error occurred'
+
+  /driver/finished_ride/{userId}:
+    put:
+        tags:
+          - Driver
+        summary: Update a driver finished
+        description: driver finished a ride 
+        operationId: ride.update_driver_finished_ride
+        security:
+          - jwt: []
+        parameters:
+          - name: userId
+            in: path
+            description: ID of the driver, who finished that rides
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: successful operation
+          '400':
+            description: Invalid data supplied
+
+  /driver/started_ride/{userId}:
+    put:
+      tags:
+        - Driver
+      summary: Update a driver start
+      description:  start the ride by driver
+      operationId: ride.update_driver_start_ride
+      security:
+        - jwt: []
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the driver, who start that rides
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Confirm rides object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/confirmRide'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+  
+
+
+
+
+  /admin/create_admin:
+    post:
+      tags:
+        - Admin
+      summary: Create admin
+      description: Register a new admin with their personal information. This can only be done during admin create.
+      operationId: admin.create_admin
+      requestBody:
+        required: true
+        description: Admin registration details.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Admin'
+      responses:
+        '200':
+          description: Admin created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Admin created successfully."
+        '400':
+          description: Invalid input supplied.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid input - Email format is incorrect."
+        '409':
+          description: Conflict - Username or email already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Conflict - Username already exists."
+        '500':
+          description: Internal Server Error - Error during the process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error. Please try again later." 
+  
+  /admin/login:
+    post:
+      tags:
+        - Admin
+      summary: Logs admin into the system
+      description: This endpoint allows a admin to log into the system using their credentials.
+      operationId: admin.login_admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The admin's username.
+                  example: johndoe
+                password:
+                  type: string
+                  description: The admin's password in clear text.
+                  example: "12345"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Authentication token to be used for subsequent requests.
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  message:
+                    type: string
+                    description: Success message.
+                    example: Login successful
+        "401":
+          description: Invalid username/password supplied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the failure reason.
+                    example: Invalid credentials. Please try again.
+        "404":
+          description: Admin not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the user was not found.
+                    example: User not found. Please sign up.
+  
+  /admin/cleardb:
+    post:
+      tags:
+        - Admin
+      summary: Clear the database
+      description: This can only be done by the maintainence team.
+      operationId: admin.clear_db
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid token supplied
+
+  /admin/dropdb:
+    post:
+      tags:
+        - Admin
+      summary: Drop the database
+      description: This can only be done by the maintainence team.
+      operationId: admin.drop_db
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid token supplied 
+
+  /admin/clearTable:
+    post:
+      tags:
+        - Admin
+      summary: Clear a specific table
+      description: Clears all entries from a specific table in the database. This operation can only be performed by the maintenance team and requires proper authorization.
+      operationId: admin.clear_table
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                table_name:
+                  type: string
+                  description: The name of the table to be cleared.
+      responses:
+        '200':
+          description: Table cleared successfully. Indicates that the specified table was found and all its entries have been successfully cleared.
+        '400':
+          description: Invalid request or table name supplied. This response is returned if the `table_name` is not provided in the request body or is invalid.
+        '401':
+          description: Unauthorized. Indicates that the request lacks a valid authentication token or the token is missing.
+        '403':
+          description: Forbidden. The user does not have permission to perform this operation. This usually means that the authenticated user is not authorized to clear tables.
+        '404':
+          description: Table not found. Returned if the specified table does not exist in the database or if the table name corresponds to a restricted table such as "alembic_version".
+        '500':
+          description: Internal Server Error. An error occurred while attempting to clear the table, such as a database error or other unexpected condition.                  
+
+  /admin/get_pending_vehicles:
+    get:
+      tags:
+        - Admin
+      summary: Returns a list of vehicle.
+      description: Returns a list of vehicle.
+      operationId: admin.get_pending_vehicles
+      responses:
+        '200':
+          description: A JSON array of vehicle
+          content:
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  type: string
+
+  /admin/confirm_vehicle/{vehicle_id}:
+    put:
+      tags:
+        - Admin
+      summary: Update vehicle confirmation
+      description: Update vehicle confirmation
+      operationId: admin.confirm_vehicle
+      parameters:
+        - name: vehicle_id
+          in: path
+          description: vehicle_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+  
+  /admin/reject_vehicle/{vehicle_id}:
+    put:
+      tags:
+        - Admin
+      summary: Update vehicle rejection
+      description: Update vehicle rejection
+      operationId: admin.reject_vehicle
+      parameters:
+        - name: vehicle_id
+          in: path
+          description: vehicle_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+
+                  
+  
+  /owner/get_all_drivers:
+    get:
+      tags:
+        - Owner
+      summary: Returns a list of users.
+      operationId: owner.get_all_drivers
+      responses:
+        "200":
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /owner/assign_vehicle_to_driver/{userId}:
+    put:
+      tags:
+        - Owner
+      summary: "Assign vehicle to driver"
+      description: "This endpoint allows the owner to assign a vehicle to an existing driver, identified by the driver's user ID."
+      operationId: owner.assign_vehicle_to_driver
+      parameters:
+        - name: userId
+          in: path
+          description: "The user ID of the driver to be assigned a vehicle."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: "Data required to assign the vehicle"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vehicle_no:
+                  type: string
+                  example: "ABC1234"
+      responses:
+        "200":
+          description: "Vehicle assigned to driver."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Vehicle assigned to driver."
+        "400":
+          description: "Bad request if the vehicle number is not provided or is invalid."
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "403":
+          description: "Forbidden if the authenticated user does not have permission to assign vehicles."
+        "404":
+          description: "Not found if the driver's userId does not exist in the system."
+  
+  /owner/add_vehicle/{organizationId}:
+    post:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Add a new vehicle to the organization"
+      description: "Allows the owner to add a new vehicle to their organization."
+      operationId: owner.add_vehicle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Vehicle"
+      responses:
+        "201":
+          description: "Vehicle successfully added."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Vehicle added successfully."
+        "400":
+          description: "Invalid input or missing required fields."
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "500":
+          description: "Internal Server Error."
+  
+  /owner/get_all_vehicles:
+    get:
+      tags:
+        - Owner
+      summary: Returns the list of vehicles he own (in his organization)
+      operationId: owner.get_all_vehicles
+      responses:
+        "200":
+          description: A JSON array of vehicles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vehicle"
+  
+  /owner/edit_vehicle/{userId}:
+    put:
+      tags:
+        - Owner
+      summary: "Edit an existing vehicle"
+      description: "Allows the owner to update details of an existing vehicle."
+      operationId: owner.edit_vehicle
+      parameters:
+        - name: userId
+          in: path
+          description: "The ID of the vehicle to be edited."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: "Data required to edit the vehicle"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vehicle_no:
+                  type: string
+                  example: "ABC1234"
+  
+      responses:
+        "200":
+          description: "Vehicle updated successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Vehicle updated successfully."
+        "400":
+          description: "Invalid input or missing required fields."
+        "404":
+          description: "Vehicle not found."
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "500":
+          description: "Internal Server Error."
+  
+  /owner/get_organization_details/{organizationId}:
+    get:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Get details of the organization"
+      description: "Fetches details of the organization including drivers and vehicles associated with the owner."
+      operationId: owner.get_organization_details
+      responses:
+        "200":
+          description: "Organization details retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drivers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/driver"
+                  vehicles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Vehicle"
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "Organization details not found."
+        "500":
+          description: "Internal Server Error."
+  
+  /owner/get_drivers_by_organization/{organizationId}:
+    get:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Get drivers by organization id"
+      description: "Fetches drivers of the organization associated with the owner."
+      operationId: owner.get_drivers_by_organization
+      responses:
+        "200":
+          description: "Driver details by organizationId retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drivers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/driver"
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "Organization details not found."
+        "500":
+          description: "Internal Server Error."
+  
+  /owner/get_vehicles_by_organization/{organizationId}:
+    get:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Get vehicles by organization id"
+      description: "Fetches vehicle detais of the organization associated with the owner."
+      operationId: owner.get_vehicles_by_organization
+      responses:
+        "200":
+          description: "Driver details by organizationId retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drivers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Vehicledetail"
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "Organization details not found."
+        "500":
+          description: "Internal Server Error."
+
+  /owner/delete_driver/{userId}:
+    put:
+      tags:
+        - Owner
+      summary: "Delete driver"
+      description: "delete driver from owner's organization"
+      operationId: owner.delete_driver
+      parameters:
+        - name: userId
+          in: path
+          description: "The ID of the vehicle to be edited."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: "Data required to edit the vehicle"
+        required: true
+        content:
+          application/json:
+            schema:
+                type: array
+                items:
+                  type: string
+  
+      responses:
+        "200":
+          description: "Vehicle updated successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Vehicle updated successfully."
+        "400":
+          description: "Invalid input or missing required fields."
+        "404":
+          description: "Vehicle not found."
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "500":
+          description: "Internal Server Error."
+
+
+  /owner/delete_vehicle/{Vehicleno}:
+    delete:
+      tags:
+        - Owner
+      summary: Delete a vehicle
+      description: Deletes a vehicle based on the vehicle no.
+      operationId: owner.delete_vehicle
+      parameters:
+        - in: path
+          name: Vehicleno
+          required: true
+          description: The ID of the vehicle will be deleted.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vehicle deleted successfully
+        '404':
+          description: vehicle not found
+
+  /owner/get_driver_by_userId/{userId}:
+    get:
+      tags:
+        - Owner
+      summary: Get driver details by userId
+      description: Get driver details by userId
+      operationId: owner.get_driver_by_userId
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Driver details userId retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 123
+                  fname:
+                    type: string
+                    example: kamal
+                  lname:
+                    type: string
+                    example: senarath
+                  phone:
+                    type: string
+                    example: 0719563248
+                  nic:
+                    type: string
+                    example: 200135694586
+                  age:
+                    type: string
+                    example: 25
+                  gender:
+                    type: string
+                    example: Male
+                  email:
+                    type: string
+                    example: 123abc@gmail.com
+                  residence:
+                    type: string
+                    example: Ratnapura
+                  Vehicleno:
+                    type: string
+                    example: "ABC123"
+
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "driver details not found."
+        "500":
+          description: "Internal Server Error."
+
+  /owner/add_driver/{userId}:
+    put:
+      tags:
+        - Owner
+      summary: "Add to driver by owner"
+      description: "This endpoint allows the owner to add driver."
+      operationId: owner.add_driver
+      parameters:
+        - name: userId
+          in: path
+          description: "The user ID of the driver add by owner."
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: "Data required to add driver"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                organization_id:
+                  type: integer
+                  example: "5"
+      responses:
+        "200":
+          description: "add driver."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "driver added by owner"
+        "400":
+          description: "Bad request if the organization is not provided or is invalid."
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "403":
+          description: "Forbidden if the authenticated user does not have permission to assign vehicles."
+        "404":
+          description: "Not found if the driver's userId does not exist in the system."
+
+  /owner/get_assign_details/{organizationId}:
+    get:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Get assignment details of the organization"
+      description: "Fetches assignment details of the organization including counts of assigned and unassigned drivers and vehicles."
+      operationId: owner.get_assign_details
+      responses:
+        "200":
+          description: "Assignment details retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unassigned_drivers_count:
+                    type: integer
+                    description: "Count of drivers with organization_id and vehicle_no is null"
+                  assigned_drivers_count:
+                    type: integer
+                    description: "Count of drivers with organization_id and vehicle_no is not null"
+                  unassigned_vehicles_count:
+                    type: integer
+                    description: "Count of vehicles with organization_id in vehicle table but not in driver table"
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "Organization details not found."
+        "500":
+          description: "Internal Server Error."
+
+  /owner/get_unassigned_drivers/{organizationId}:
+    get:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Get drivers without vehicles"
+      description: "Fetches drivers of the organization who do not have vehicles assigned."
+      operationId: owner.get_unassigned_drivers
+      responses:
+        "200":
+          description: "Drivers who not assign vehicle retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Results:
+                    type: array
+                    description: "List of drivers without vehicles"
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: "Driver ID"
+                        first_name:
+                          type: string
+                          description: "Driver's first name"
+                        last_name:
+                          type: string
+                          description: "Driver's last name"
+                        
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "Organization details not found."
+        "500":
+          description: "Internal Server Error."
+
+
+  /owner/get_owner_by_userId/{userId}:
+    get:
+      tags:
+        - Owner
+      summary: Get owner details by userId
+      description: Get owner details by userId
+      operationId: owner.get_owner_by_userId
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The ID of the user
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Owner details userId retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 123
+                  fname:
+                    type: string
+                    example: kamal
+                  lname:
+                    type: string
+                    example: senarath
+                  phone:
+                    type: string
+                    example: 0719563248
+                  email:
+                    type: string
+                    example: 123abc@gmail.com
+
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "driver details not found."
+        "500":
+          description: "Internal Server Error."
+
+  /owner/get_total_count/{organizationId}:
+    get:
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Get total counts of drivers and vehicles"
+      description: "Fetches the total count of drivers and vehicles for the organization."
+      operationId: owner.get_total_count
+      responses:
+        "200":
+          description: "Total counts retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_drivers_count:
+                    type: integer
+                    description: "Total number of drivers"
+                  total_vehicles_count:
+                    type: integer
+                    description: "Total number of vehicles"
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "Organization details not found."
+        "500":
+          description: "Internal Server Error."
+
+  /owner/edit_owner_details/{userId}:
+    put:
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Edit owner details"
+      description: "Edits the details of an owner given their user ID."
+      operationId: owner.edit_owner_details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: "User ID"
+                  example: 1
+                fname:
+                  type: string
+                  description: "First name"
+                  example: "John"
+                lname:
+                  type: string
+                  description: "Last name"
+                  example: "Doe"
+                phone:
+                  type: string
+                  description: "Phone number"
+                  example: "123-456-7890"
+                email:
+                  type: string
+                  description: "Email address"
+                  example: "john.doe@example.com"
+      responses:
+        "200":
+          description: "User updated successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User updated successfully"
+        "400":
+          description: "Bad Request - Request body must be JSON or required fields are missing."
+        "404":
+          description: "User not found for the given user ID."
+        "500":
+          description: "Internal Server Error."
+
+  /owner/edit_driver_details/{userId}:
+    put:
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Owner
+      summary: "Edit owner details"
+      description: "Edits the details of an owner given their user ID."
+      operationId: owner.edit_driver_details  # Update operationId to match function name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: "User ID"
+                  example: 1
+                fname:
+                  type: string
+                  description: "First name"
+                  example: "John"
+                lname:
+                  type: string
+                  description: "Last name"
+                  example: "Doe"
+                phone:
+                  type: string
+                  description: "Phone number"
+                  example: "123-456-7890"
+                email:
+                  type: string
+                  description: "Email address"
+                  example: "john.doe@example.com"
+                residence:
+                  type: string
+                  description: Residence of the owner
+                  example: New York
+      responses:
+        "200":
+          description: "User updated successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User updated successfully"
+        "400":
+          description: "Bad Request - Request body must be JSON or required fields are missing."
+        "404":
+          description: "User not found for the given user ID."
+        "500":
+          description: "Internal Server Error."
+
+  # /owner/insert_owner/{userId}:
+  #   post:
+  #     parameters:
+  #       - name: userId
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: integer
+  #     tags:
+  #       - Owner
+  #     summary: "Add a new owner"
+  #     description: "owner add to the owner table."
+  #     operationId: owner.insert_owner
+  #     responses:
+  #       "201":
+  #         description: "Owner successfully added."
+  #       "400":
+  #         description: "Invalid input or missing required fields."
+  #       "401":
+  #         description: "Unauthorized if the user is not authenticated."
+  #       "500":
+  #         description: "Internal Server Error."
+
+  /vehicle/get_vehicle_details/{userId}:
+    get:
+      tags:
+        - Vehicle
+      summary: "Get vehicles by driver id"
+      description: "Fetches vehicle detais of driver."
+      operationId: driver.get_vehicle_details      
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "vehicle details by userid retrieved successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vehicle_details:
+                    $ref: "#/components/schemas/Vehicle"
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "404":
+          description: "user details not found."
+        "500":
+          description: "Internal Server Error."
+
+
+  /economicCenter/insert_ecseller/{userId}:
+    post:
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - economicCenter
+      summary: "Add a new ecseller"
+      description: "ecseller add to the ecseller table."
+      operationId: economicCenter.insert_ecseller
+      responses:
+        "201":
+          description: "ecseller successfully added."
+        "400":
+          description: "Invalid input or missing required fields."
+        "401":
+          description: "Unauthorized if the user is not authenticated."
+        "500":
+          description: "Internal Server Error."
+
+
+
+  /economicCenter:
+      get:
+        tags:
+          - economicCenter
+        summary: Get all economic centers
+        operationId: economicCenter.read_all_economic_centers
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EconomicCenter'
+
+  /freshItem/{seller_id}:
+    post:
+      tags:
+        - freshItem
+      summary: Create a new fresh item
+      operationId: freshItem.create_fresh_item
+      parameters:
+        - in: path
+          name: seller_id
+          required: true
+          description: ID of the seller
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreshItem'
+      responses:
+        '201':
+          description: Item created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreshItem'
+    get:
+      tags:
+        - freshItem
+      summary: Get all fresh items for a specific seller
+      operationId: freshItem.read_freshItem_for_seller
+      parameters:
+        - in: path
+          name: seller_id
+          required: true
+          description: ID of the seller
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'
+
+  /freshItem/{date}:
+    get:
+      tags:
+        - freshItem
+      summary: Get all fresh items for a specific on a specific date
+      operationId: freshItem.read_freshItem_on_date
+      parameters:
+        - in: path
+          name: date
+          required: true
+          description: Date of the fresh items
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'
+
+  /freshItem/OnNameDate{name}/{date}:
+    get:
+      tags:
+        - freshItem
+      summary: Get all fresh items for a specific item on a specific date
+      operationId: freshItem.read_freshItem_for_item_on_date
+      parameters:
+        - in: path
+          name: name
+          required: true
+          description: Name of the item
+          schema:
+            type: integer
+        - in: path
+          name: date
+          required: true
+          description: Date of the fresh items
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'              
+
+  /freshItem/OnDateEC/{date}/{economic_center_id}:
+    get:
+      tags:
+        - freshItem
+      summary: Get all fresh items for a specific economic center on a specific date
+      operationId: freshItem.read_freshItem_for_ec_on_date
+      parameters:
+        - in: path
+          name: economic_center_id
+          required: true
+          description: ID of the economic center
+          schema:
+            type: integer
+        - in: path
+          name: date
+          required: true
+          description: Date of the fresh items
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'
+                  
+  /freshItem/OnSellerDateEC/{seller_id}/{economic_center_id}/{date}:
+    get:
+      tags:
+        - freshItem
+      summary: Get all fresh items for a specific economic center on a specific date
+      operationId: freshItem.read_freshItem_for_ec_on_date_for_seller
+      parameters:
+        - in: path
+          name: economic_center_id
+          required: true
+          description: ID of the economic center
+          schema:
+            type: integer
+        - in: path
+          name: date
+          required: true
+          description: Date of the fresh items
+          schema:
+            type: string
+            format: date
+        - in: path
+          name: seller_id
+          required: true
+          description: ID of the seller
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'
+
+  /freshItem/OnSellerDate/{seller_id}/{date}:
+    get:
+      tags:
+        - freshItem
+      summary: Get all fresh items for a specific seller on a specific date
+      operationId: freshItem.read_freshItem_for_date_for_seller
+      parameters:
+        - in: path
+          name: seller_id
+          required: true
+          description: ID of the seller
+          schema:
+            type: integer
+        - in: path
+          name: date
+          required: true
+          description: Date of the fresh items
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'
+
+  /freshItem/{id}:
+    put:
+      tags:
+        - freshItem
+      summary: Update a fresh item
+      operationId: freshItem.update_freshItem_for_ec_on_date_for_seller
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of the fresh item
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreshItem'
+      responses:
+        '200':
+          description: Item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreshItem'
+    
+    delete:
+      tags:
+        - freshItem
+      summary: Delete a fresh item
+      operationId: freshItem.delete_freshItem_for_seller
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of the fresh item
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Item deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreshItem'
+  
+  /freshItem/OnDateNameEC/{date}/{economic_center_id}/{name}: 
+    get:
+      tags:
+        - freshItem
+      summary: Get seller on a specific fresh item for a specific economic center on a specific date
+      operationId: freshItem.read_ec_seller_list
+      parameters:
+        - in: path
+          name: economic_center_id
+          required: true
+          description: ID of the economic center
+          schema:
+            type: integer
+        - in: path
+          name: date
+          required: true
+          description: Date of the fresh items
+          schema:
+            type: string
+            format: date
+        - in: path
+          name: name
+          required: true
+          description: Name of the item
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'
+
+  /freshItem/OnDateNameSellerEC/{date}/{economic_center_id}/{name}/{seller_id}: 
+    get:
+      tags:
+        - freshItem
+      summary: Get seller on a specific fresh item for a specific economic center on a specific date
+      operationId: freshItem.read_freshItem_for_ec_on_date_name_for_EC_id_seller
+      parameters:
+        - in: path
+          name: economic_center_id
+          required: true
+          description: ID of the economic center
+          schema:
+            type: integer
+        - in: path
+          name: date
+          required: true
+          description: Date of the fresh items
+          schema:
+            type: string
+            format: date
+        - in: path
+          name: name
+          required: true
+          description: Name of the item
+          schema:
+            type: string
+        - in: path
+          name: seller_id
+          required: true
+          description: ID of the seller
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreshItem'
+
+  /order/{buyer_id}:
+    post:
+      tags:
+        - order
+      summary: Create a new order
+      operationId: order.create_order
+      parameters:
+        - in: path
+          name: buyer_id
+          required: true
+          description: ID of the buyer
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /order/OnDateBuyer/{dueDate}/{buyer_id}:
+    get:
+      tags:
+        - order
+      summary: Get all orders for a specific economic center on a specific date
+      operationId: order.read_order_for_ec_on_date
+      parameters:
+        - in: path
+          name: buyer_id
+          required: true
+          description: ID of the buyer
+          schema:
+            type: integer
+        - in: path
+          name: dueDate
+          required: True
+          description: Date of the statistic
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order' 
+
+  /order/OnDateBuyerEC/{dueDate}/{economic_center_id}/{buyer_id}:
+    get:
+      tags:
+        - order
+      summary: Get all orders for a specific economic center on a specific date
+      operationId: order.read_items_in_order
+      parameters:
+        - in: path
+          name: buyer_id
+          required: true
+          description: ID of the buyer
+          schema:
+            type: integer
+        - in: path
+          name: dueDate
+          required: True
+          description: Date of the statistic
+          schema:
+            type: string
+            format: date
+        - in: path
+          name: economic_center_id
+          required: True
+          description: Economic Center ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  /order/updateOrder/{id}:
+    put:
+      tags:
+        - order
+      summary: Update an order
+      operationId: order.update_order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of the order
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '200':
+          description: Order updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /order/deleteOrder/{id}/{freshItem_id}:  
+    delete:
+      tags:
+        - order
+      summary: Delete an order
+      operationId: order.delete_order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of the order
+          schema:
+            type: integer
+        - in: path
+          name: freshItem_id
+          required: true
+          description: ID of the fresh item
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  
+  /item/fruit:
+    get:
+      tags:
+        - item
+      summary: Get all fruit items
+      operationId: item.read_all_fruit_items
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+
+  /item/vegetable:
+    get:
+      tags:
+        - item
+      summary: Get all vegetable items
+      operationId: item.read_all_vegetable_items
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+
+  /item/leaf:
+    get:
+      tags:
+        - item
+      summary: Get all leafy vegetable items
+      operationId: item.read_all_leaf_items
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+
+  /item:
+    get:
+      tags:
+        - item
+      summary: Get all items
+      operationId: item.read_all_items
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+
+  /analytical/generate_report/{economic_center_id}/{name}/{year}:
+    get:
+      tags:
+        - Report
+      summary: Generate a report based on orders filtered by item name, economic center, and year.
+      operationId: report.create_report
+      parameters:
+        - in: path
+          name: economic_center_id
+          required: true
+          description: ID of the economic center
+          schema:
+            type: integer
+        - in: path
+          name: name
+          required: true
+          description: Name of the item
+          schema:
+            type: integer
+        - in: path
+          name: year
+          required: true
+          description: Year of the report
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of orders matching the criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    economic_center:
+                      type: string
+                    name:
+                      type: string
+                    month:
+                      type: integer
+                    quantity:
+                      type: integer
+        '400':
+          description: Missing required parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Missing required parameters"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Database error occurred" 
+
+
+
+
+  /cf/create_ride:
+    post:
+      tags:
+        - Cargo Finder
+      summary: Getting package details
+      description: This can only be done when cargo finder creates an order.
+      operationId: cargoFinder.create_packageDetails
+      requestBody:
+        description: create a package
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageDetail'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+        '500':
+          description: Internal Server Error - Error during the process.
+
+  /cf/create_MSDetails:
+    post:
+      tags:
+        - Cargo Finder
+      summary: Getting package details
+      description: This can only be done when cargo finder creates an order.
+      operationId: cargoFinder.create_MSDetails
+      requestBody:
+        description: create a package
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MSDetails'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+        '500':
+          description: Internal Server Error - Error during the process.
+
+  /cf/confirm:
+    put:
+        tags:
+          - Cargo Finder
+        summary: Update a cargo finder confirmation
+        description: Update a ride with cargo finder confirmation
+        operationId: cargoFinder.update_cf_confirmation
+        requestBody:
+          description: Confirm driver's request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/confirmRide'
+        responses:
+          '200':
+            description: successful operation
+          '400':
+            description: Invalid data supplied
+
+  /cf/reject:
+    put:
+      tags:
+        - Cargo Finder
+      summary: Update a cargo finder rejection
+      description: Update a ride with cargo finder rejection
+      operationId: cargoFinder.update_cf_rejection
+      requestBody:
+        description: reject driver's request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/confirmRide'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+  /cf/retry:
+    put:
+      tags:
+        - Cargo Finder
+      summary: Clear all confimations
+      description: Clear all confimations
+      operationId: cargoFinder.update_retry
+      requestBody:
+        description: Clear all confimations
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/confirmRide'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+  /cf/current_rides/{userId}:
+    get:
+      tags:
+        - Cargo Finder
+      summary: Get all current rides
+      operationId: cargoFinder.get_current_package
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the cargo finder.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/suggestedRide'
+
+  /cf/finished_rides/{userId}:
+    get:
+      tags:
+        - Cargo Finder
+      summary: Get all finished rides
+      operationId: cargoFinder.get_finished_package
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the cargo finder.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/suggestedRide'
+
+  /cf/delete_ride/{rideId}:
+    delete:
+        tags:
+          - Cargo Finder
+        summary: Delete a cargo finder ride
+        description: Deletes a ride based on the ride ID.
+        operationId: cargoFinder.delete_ride
+        parameters:
+          - name: rideId
+            in: path
+            description: The ID of the ride.
+            required: true
+            schema:
+              type: integer
+        responses:
+          '204':
+            description: Ride deleted successfully
+          '404':
+            description: Ride not found
+
+  /cf/packageId:
+    get:
+      tags:
+        - Cargo Finder
+      summary: Retrieve the package id
+      description: Retrieve the package id after entering package details
+      operationId: cargoFinder.get_packageId
+
+      responses:
+        '400':
+          description: Invalid data supplied
+
+  /cf/update_finished/{rideId}:
+    put:
+      tags:
+        - Cargo Finder
+      summary: Finished the ride
+      description: Finished the ride
+      operationId: cargoFinder.update_finished
+      parameters:
+        - name: rideId
+          in: path
+          description: ID of ride
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+  /cf/update_pickup/{rideId}:
+    put:
+      tags:
+        - Cargo Finder
+      summary: Finished the ride
+      description: Finished the ride
+      operationId: cargoFinder.update_pickup
+      parameters:
+        - name: rideId
+          in: path
+          description: ID of ride
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+  /cf/send_special_request:
+    put:
+      tags:
+        - Cargo Finder
+      summary: send special request to driver
+      description: Send special request to driver
+      operationId: cargoFinder.send_special_request
+      requestBody:
+        description: create a package
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Special_Request'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+
+  /cf/getDriverIdByOrderId/{orderId}:
+    get:
+      tags:
+        - Cargo Finder
+      summary: Retrieve driver ID by order ID
+      description: Fetch the driver ID associated with a specific order ID.
+      operationId: cargoFinder.getDriverIdByOrderId
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: The unique ID of the cargo order.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved the driver ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  driverId:
+                    type: integer
+                    description: The ID of the driver associated with the order.
+                    example: 123
+        '400':
+          description: Invalid order ID supplied.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid order ID.
+        '404':
+          description: Order not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Order not found.
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal server error. Please try again later.
+
+
+
+
+
+  /package/pickup_drop_details/{rideId}:
+    get:
+      tags:
+        - Package Details
+      summary: Get package details
+      operationId: cargoFinder.pickup_drop_details
+      parameters:
+        - name: rideId
+          in: path
+          description: The ID of the rider.
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/suggestedRide'
+
+
+
+  /review:
+    post:
+      tags:
+        - Review
+      summary: Store the review details  # Corrected typo: summary instead of summery
+      description: Create a new review  # Corrected typo: Create instead of create
+      operationId: Review.create_review
+      requestBody:
+        description: Create a new review
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+  /review/{user_id}:
+    get:
+      tags:
+        - Get Review Data
+      summary: Get Review data For Sepecific User
+      operationId: Review.get_user_review_stats
+      description: Retrieve the latest review, average rating, rating count, and review count for a specific user.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: ID of the user to retrieve review data for
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReviewStats'
+        '400':
+          description: Invalid user ID supplied
+
+        '404':
+          description: User not found
+
+        '500':
+          description: Server error
+
+
+  /review_analysis/{user_id}:
+    get:
+      tags:
+        - Review
+      summary: Retrieve review analysis for a specific user
+      operationId: Review.get_user_percentage_review
+      description: Get Review Analysis
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user for whom review analysis is to be fetched
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReviewAnalysis'
+        '500':
+          description: Error response
+
+  /pending_user:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get pending user from user and Variefied them
+      operationId: AdminDashBoard.get_pending_user
+      description: Get pending user from user and Variefied them
+      responses:
+        '200':
+          description: A list of pending user details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDetails'
+        '500':
+          description: Error fetching pending user details
+
+  /driver/varified/{user_id}:
+    put:
+      tags:
+        - Admin Dashboard
+      summary: Update user Varification
+      operationId: AdminDashBoard.varified_driver
+      description: Update pending user to varified
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user to be verified
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        description: Special Request rejected by driver.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/varifiedUser'
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid data supplied
+
+  /pending_driver/reject/{user_id}/{reject_reason}:
+    post:
+      tags:
+        - Admin Dashboard
+      summary: Decline Driver
+      operationId: AdminDashBoard.reject_driver
+      description: Reject Driver who has unclear details
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user to be rejected
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: reject_reason
+          in: path
+          description: Reason why the user is rejected
+          required: true
+          schema:
+            type: string
+            example: "Driver documentation incomplete"
+      responses:
+        '200':
+          description: Driver rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Driver rejected successfully
+        '400':
+          description: Bad request, user ID or reject reason not provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User ID and reject reason are required
+        '404':
+          description: Driver not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Driver not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to reject driver
+
+  /driver_details:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Driver Details
+      operationId: AdminDashBoard.driver_details
+      description: Get all details for admin web app
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Get_driver_details'
+        '400':
+          description: Invalid data supplied
+
+  /driver_all_detals/{id}:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Get Driver All details
+      operationId: AdminDashBoard.get_all_driver_data
+      description: Get all details of the driver for user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the driver to fetch
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Get_all_details_of_the_driver'
+        '400':
+          description: Invalid data supplied
+
+  /pending_ec_seller:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: "Get unverified EC Sellers"
+      operationId: AdminDashBoard.get_ec_seller
+      description: "Retrieve details of EC Sellers where verified is 0"
+      responses:
+        200:
+          description: "A list of unverified EC Sellers"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/get_unverified_ec_seller'
+        500:
+          description: "Internal server error"
+
+  /ec_seller_details/{user_id}:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: "Get economic center seller all details"
+      operationId: AdminDashBoard.get_ec_seller_details
+      description: "Retrieve the details of an EC Seller based on the provided user_id"
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: id of the seller
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful insert
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/get_ec_seller_details'
+
+  /ec_seller/verfied/{user_id}:
+    put:
+      tags:
+        - Admin Dashboard
+      summary: Update EC Seller Verification Status
+      description: Update the verification status of an EC seller from pending to verified.
+      operationId: AdminDashBoard.verified_ec_seller
+      parameters:
+        - name: user_id
+          in: path
+          description: ID of the user to be verified
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid user ID supplied
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+  /cargo_finders:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: "Get cargo finders"
+      description: "Returns a list of users with user type 'CF'."
+      operationId: AdminDashBoard.get_cargo_finders
+      responses:
+        200:
+          description: "A list of users with user type 'CF'."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CargoFinders"
+        500:
+          description: "Internal server error."
+
+  /users/count:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: "Get the count of all users"
+      description: "Retrieves the total number of registered users in the system"
+      operationId: AdminDashBoard.get_all_users_count
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 100
+        '500':
+          description: Internal server error
+
+
+  /admin/cargo_ride_details:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: "Get all cargo rides with driver confirmation status"
+      description: "Retrieve details of all cargo rides along with their driver confirmation status."
+      operationId: AdminDashBoard.cargo_ride_details
+      responses:
+        '200':
+          description: "A list of cargo rides"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/cargoRideWithConfirmation"
+
+        '500':
+          description: Internal server error
+
+
+  /admin/cargo_finder/{user_id}:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: "Get Cargo Finder Details"
+      description: "Retrieve details of a cargo finder by user ID."
+      operationId: AdminDashBoard.get_cargo_finder_details
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: "ID of the cargo finder user."
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "Details of the cargo finder."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/get_cargo_finder_details'
+        404:
+          description: "Cargo finder not found."
+        500:
+          description: "Internal server error."
+
+  /admin/reviews:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: "Get all reviews"
+      description: "Retrieve a list of all reviews"
+      operationId: AdminDashBoard.all_reviews
+      responses:
+        '200':
+          description: "A list of reviews"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/adminReview"
+        '500':
+          description: "Internal server error"
+
+
+components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: auth.bearer_info_func
+
+  schemas:
+    User:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - Driver
+              - Owner
+              - CargoFinder
+              - EconomicCenterSeller
+              - MarketSeller
+              - Admin
+              - SuperAdmin
+          example: ['Owner', 'Driver']
+        fname:
+          type: string
+          example: Michel
+        lname:
+          type: string
+          example: Starc
+        email:
+          type: string
+          format: email
+          example: michelstarc@example.com
+        contact_no:
+          type: string
+          example: '+1234567890'
+        age:
+          type: integer
+          format: int32
+          example: 30
+        gender:
+          type: string
+          example: m
+        nic:
+          type: string
+          example: '987654321V'
+        username:
+          type: string
+          example: starc123
+        password:
+          type: string
+          format: password
+          example: 'Password!234'
+      required:
+        - roles
+        - fname
+        - lname
+        - email
+        - contact_no
+        - age
+        - gender
+        - nic
+        - username
+        - password
+
+    Admin:
+      type: object
+      properties:
+        fname:
+          type: string
+          example: Michel
+        lname:
+          type: string
+          example: Starc
+        email:
+          type: string
+          format: email
+          example: michelstarc@example.com
+        contact_no:
+          type: string
+          example: '+1234567890'
+        age:
+          type: integer
+          format: int32
+          example: 30
+        gender:
+          type: string
+          example: m
+        nic:
+          type: string
+          example: '987654321V'
+        username:
+          type: string
+          example: starc123
+        password:
+          type: string
+          format: password
+          example: 'Password!234'
+      required:
+        - fname
+        - lname
+        - email
+        - contact_no
+        - age
+        - gender
+        - nic
+        - username
+        - password
+
+    Driver:
+      type: object
+      properties:
+        fname:
+          type: string
+          example: John
+        lname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: johndoe@example.com
+        contact_no:
+          type: string
+          example: '+1234567890'
+        age:
+          type: integer
+          format: int32
+          example: 30
+        gender:
+          type: string
+          example: m
+        nic:
+          type: string
+          example: '987654321V'
+        address:
+          type: string
+          example: "123 Main St, Anytown"
+        username:
+          type: string
+          example: johndoe123
+        password:
+          type: string
+          format: password
+          example: 'Password!234'
+        licenece_url_side1:
+          type: string
+          format: uri
+          example: "https://example.com/images/license_front.jpg"
+        licenece_url_side2:
+          type: string
+          format: uri
+          example: "https://example.com/images/license_back.jpg"
+      required:
+        - fname
+        - lname
+        - email
+        - contact_no
+        - age
+        - gender
+        - nic
+        - username
+        - password
+        - address
+        - licenece_url_side1
+        - licenece_url_side2
+               
+    Owner:
+      type: object
+      properties:
+        fname:
+          type: string
+          example: John
+        lname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: johndoe@example.com
+        contact_no:
+          type: string
+          example: '+1234567890'
+        gender:
+          type: string
+          example: m
+        nic:
+          type: string
+          example: '987654321V'
+      required:
+        - fname
+        - lname
+        - email
+        - contact_no
+        - gender
+        - nic
+        - username
+        - password
+        
+    Vehicle:
+      type: object
+      properties:
+        Vehicleno:
+          type: string
+          example: BDP4515
+        brand:
+          type: string
+          example: TOYOTA
+        model:
+          type: string
+          format: Axios
+        type:
+          type: string
+          example: Coverd
+        length:
+          type: number
+          example: 10
+          description: "in meters"
+        width:
+          type: number
+          example: 3
+          description: "in meters"
+        height:
+          type: number
+          example: 4
+          description: "in meters"
+        tonnage:
+          type: number
+          example: 7 
+          description: "in metricton"
+      required:
+        - Vehicleno
+        - brand
+        - model
+        - type
+        - length
+        - width
+        - height
+        - tonnage
+          
+    ride:
+      type: object
+      properties:
+        location:
+          type: string
+          example: "Colombo"
+        destination:
+          type: string
+          example: "Ratnapura"
+        location_lat:
+          type: string
+          example: 6.9270786
+        location_lon:
+          type: string
+          example: 6.370786
+        destination_lat:
+          type: string
+          example: 6.7055742
+        destination_lon:
+          type: string
+          example: 6.94786
+        date:
+          type: string
+          example: 2024-03-13T09:33:31.108Z
+        time:
+          type: string
+          example: Now
+        user_id:
+          type: integer
+          example: 2
+        finished_ride:
+          type: boolean
+          example: false
+          
+    user_type:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        user_type:
+          type: string
+          example: "MS"
+          
+    user:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        fname:
+          type: string
+          example: "John Doe"
+        photo:
+          type: string
+          example: "../assests/images/default.jpg"
+          
+    suggestedRide:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        contact_recipient:
+          type: string
+          example: "0717578790"
+        date:
+          type: string
+          format: date-time
+          example: "2022-03-13T09:33:31.108Z"
+        package_type:
+          type: string
+          example: "Fragile"
+        weight:
+          type: number  # Changed type from 'float' to 'number'
+          example: 100.0
+        height:
+          type: number  # Changed type from 'float' to 'number'
+          example: 50.0
+        length:
+          type: number  # Changed type from 'float' to 'number'
+          example: 100.0
+        width:
+          type: number  # Changed type from 'float' to 'number'
+          example: 80.0
+        truck_type:
+          type: string
+          example: "Covered"
+        location:
+          type: string
+          example: "Colombo"
+        destination:
+          type: string
+          example: "Ratnapura"
+        plat:
+          type: string  
+          example: "6.7055742"  
+        plon:
+          type: string  
+          example: "79.861243"  
+        dlat:
+          type: string 
+          example: "6.9270786" 
+        dlon:
+          type: string  
+          example: "79.861243"
+        driver_id:
+          type: integer
+          format: int64
+          example: 1
+        driver_confirmation:
+          type: boolean  
+          example: false
+        cf_confirmation:
+          type: boolean  
+          example: false
+        finished:
+          type: boolean  
+          example: false
+        driver_rejection:
+          type: boolean
+        cf_rejection:
+          type: boolean
+        special_request:
+          type: boolean
+        cost:
+          type: number
+          example: 100.0
+    
+    confirmRide:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int64
+            example: 44
+          contact_recipient:
+            type: string
+            example: "0717578790"
+          date:
+            type: string
+            format: date-time
+            example: "2022-03-13T09:33:31.108Z"
+          package_type:
+            type: string
+            example: "Fragile"
+          weight:
+            type: number  # Changed type from 'float' to 'number'
+            example: 100.0
+          height:
+            type: number  # Changed type from 'float' to 'number'
+            example: 50.0
+          length:
+            type: number  # Changed type from 'float' to 'number'
+            example: 100.0
+          width:
+            type: number  # Changed type from 'float' to 'number'
+            example: 80.0
+          truck_type:
+            type: string
+            example: "Covered"
+          location:
+            type: string
+            example: "Colombo"
+          destination:
+            type: string
+            example: "Ratnapura"
+          plat:
+            type: string  
+            example: "6.7055742"  
+          plon:
+            type: string  
+            example: "79.861243"  
+          dlat:
+            type: string 
+            example: "6.9270786" 
+          dlon:
+            type: string  
+            example: "79.861243"
+          driver_id:
+            type: integer
+            format: int64
+            example: 123
+            nullable: true
+          driver_confirmation:
+            type: boolean  
+            example: false
+          cf_confirmation:
+            type: boolean  
+            example: false
+          finished:
+            type: integer
+            format: int64
+            example: 0
+          driver_rejection:
+            type: boolean
+          cf_rejection:
+            type: boolean
+          special_request:
+            type: boolean
+          cost:
+            type: number
+            example: 100.0
+
+    EconomicCenter:
+      type: object
+      properties:
+        ec_id:
+          type: integer
+          format: int64
+          description: The ID of the economic center
+        ec_name:
+          type: string
+          description: The name of the economic center
+        longitude:
+          type: string
+          description: The longitude of the economic center
+        latitude:
+          type: string
+          description: The latitude of the economic center
+
+    FreshItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The ID of the fresh item
+        name:
+          type: integer
+          format: int64
+          description: The ID of the item table
+        weight:
+          type: integer
+          description: The weight of the fresh item
+        date :
+          type: string
+          format: date-time
+          description: The time fresh item brings at
+        time:
+          type: string
+          format: date-time
+          description: The time the fresh item brings on
+        additionalNote:
+          type: string
+          description: Additional notes about the fresh item
+        seller_id:
+          type: integer
+          format: int64
+          description: The ID of the seller
+        economic_center:
+          type: integer
+          description: The value of the fresh item
+        total_order:
+          type: integer
+          description: The total orders of the item
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The ID of the order
+        date:
+          type: string
+          format: date-time
+          description: The time of the order
+        quantity:
+          type: integer
+          description: The quantity of the item
+        dueDate:
+          type: string
+          format: date-time
+          description: The time of the order
+        economic_center_id:
+          type: integer
+          description: The value of the order
+        name:
+          type: integer
+          description: The ID of the item
+        buyer_id:
+          type: integer
+          description: The ID of the buyer
+        seller_id:
+          type: integer
+          description: The ID of the seller
+        cargo_ride_id:
+          type: integer
+          description: The ID of the cargo ride
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The ID of the item
+        type:
+          type: string
+          description: The type of the item
+        name:
+          type: string
+          description: The name of the item
+
+    
+    Vehicledetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        Vehicleno:
+          type: string
+          example: "ABC123"
+        brand:
+          type: string
+          example: "Mitsubishi"
+        type:
+          type: string
+          example: Covered
+        length:
+          type: number
+          example: 10
+          description: "in meters"
+        width:
+          type: number
+          example: 3
+          description: "in meters"
+        height:
+          type: number
+          example: 4
+          description: "in meters"
+        tonnage:
+          type: number
+          example: 7 
+          description: "in metricton"
+
+    driver:
+      type: object
+      properties:
+        id:
+          type: integer
+        fname:
+          type: string
+        lname:
+          type: string
+        phone:
+          type: string
+      required:
+        - fname
+        - lname
+        - phone
+
+    PackageDetail:
+      type: object
+      properties:
+        package_type:
+          type: string
+          example: "cover"
+        weight:
+          type: integer
+          example: 50
+        height:
+          type: integer
+          example: 60
+        length:
+          type: integer
+          example: 50
+        width:
+          type: integer
+          example: 20
+        truck_type:
+          type: string
+          example: "cover"
+        plat:
+          type: string  
+          example: "6.7055742"  
+        plon:
+          type: string  
+          example: "79.861243"  
+        dlat:
+          type: string 
+          example: "6.9270786" 
+        dlon:
+          type: string  
+          example: "79.861243"
+        user_id:
+          type: integer
+          example: 3
+        location:
+          type: string
+          example: "Colombo"
+        destination:
+          type: string
+          example: "Ratnapura"
+        date:
+          type: string
+          format: date-time
+        contact_recipient:
+          type: string
+          example: "0763509028"
+        cost:
+          type: string
+          example: 2.5
+
+    MSDetails:
+      type: object
+      properties:
+        package_type:
+          type: string
+          example: "cover"
+        weight:
+          type: integer
+          example: 50
+        truck_type:
+          type: string
+          example: "cover"
+        plat:
+          type: string  
+          example: "6.7055742"  
+        plon:
+          type: string  
+          example: "79.861243"  
+        dlat:
+          type: string 
+          example: "6.9270786" 
+        dlon:
+          type: string  
+          example: "79.861243"
+        user_id:
+          type: integer
+          example: 3
+        location:
+          type: string
+          example: "Colombo"
+        destination:
+          type: string
+          example: "Ratnapura"
+        date:
+          type: string
+          format: date-time
+        contact_recipient:
+          type: string
+          example: "0763509028"
+        cost:
+          type: string
+          example: 2.5
+
+    Review:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 3
+        rating:
+          type: integer
+          example: 4
+        title:
+          type: string
+          example: "About Ride"
+        comment:
+          type: string
+          example: "Very good driver"
+
+    UserReviewStats:
+      type: object
+      properties:
+          last_review:
+            type: object
+            nullable: true
+            properties:
+              rating:
+                type: integer
+                example: 5
+              title:
+                type: string
+                example: Great
+              comment:
+                type: string
+                example: Awesome!
+              date:
+                type: string
+                format: date-time
+                example: 2023-03-01T10:00:00
+              average_rating:
+                type: number
+                format: float
+                example: 4.0
+              rating_count:
+                type: integer
+                example: 3
+              review_count:
+                type: integer
+                example: 3
+
+    Special_Request:
+      type: object
+      properties:
+        rideId:
+          type: integer
+          example: 3
+        driver_id:
+          type: integer
+          example: 4
+
+    UserDetails:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: The user ID
+          fname:
+            type: string
+            description: The user's first name
+          lname:
+            type: string
+            description: The user's last name
+          nic:
+            type: string
+            description: The user's NIC
+          user_type:
+            type: string
+            description: The user's type (e.g., 'Ms', 'CF')
+
+
+    UserReviewAnalysis:
+      type: object
+      properties:
+        positive_percent:
+          type: number
+          description: Percentage of positive ratings (4 or 5)
+          example: 60.0
+        neutral_percent:
+          type: number
+          description: Percentage of neutral ratings (2 or 3)
+          example: 30.0
+        poor_percent:
+          type: number
+          description: Percentage of poor ratings (1)
+          example: 10.0
+        total_reviews:
+          type: integer
+          description: Number of total user
+          example: 5
+
+    varifiedUser:
+      type: object
+      properties:
+        user_id:
+          type: integer
+
+
+    Get_driver_details:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The driver's ID
+          example: 1
+        fname:
+          type: string
+          description: The driver's first name
+          example: John
+        lname:
+          type: string
+          description: The driver's last name
+          example: Doe
+        email:
+          type: string
+          description: The driver's email
+          example: johndoe@example.com
+        age:
+          type: integer
+          description: The driver's age
+          example: 35
+        phone:
+          type: string
+          description: The driver's phone number
+          example: "+1234567890"
+        nic:
+          type: string
+          description: The driver's National Identity Card number
+          example: "123456789V"
+        gender:
+          type: string
+          description: The driver's gender
+          example: "Male"
+        verified:
+          type: integer
+          description: Whether the driver is verified
+          example: 2
+
+    Get_all_details_of_the_driver:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        fname:
+          type: string
+          example: "John"
+        lname:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          example: "john.doe@example.com"
+        age:
+          type: integer
+          example: 30
+        phone:
+          type: string
+          example: "123-456-7890"
+        nic:
+          type: string
+          example: "991211748v"
+        gender:
+          type: string
+          example: "Male"
+        verified:
+          type: boolean
+          example: true
+        residence:
+          type: string
+          example: "1234 Elm Street, Springfield, IL"
+        average_rating:
+          type: number
+          format: float
+          example: 4.5
+
+
+    get_unverified_ec_seller:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          example: 1
+        fname:
+          type: "string"
+          example: "John"
+        lname:
+          type: "string"
+          example: "Doe"
+        email:
+          type: "string"
+          example: "john.doe@example.com"
+        ec_seller_verified:
+          type: "integer"
+          example: 0
+
+
+    get_ec_seller_details:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        fname:
+          type: string
+          example: John
+        lname:
+          type: string
+          example: Doe
+        email:
+          type: string
+          example: john.doe@example.com
+        age:
+          type: integer
+          example: 30
+        phone:
+          type: string
+          example: '+1234567890'
+        nic:
+          type: string
+          example: '123456789V'
+        gender:
+          type: string
+          example: Male
+        verified:
+          type: integer
+          example: 1
+        created:
+          type: string
+          format: date-time
+          example: '2022-01-01T00:00:00Z'
+
+    CargoFinders:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+          example: 1
+        fname:
+          type: "string"
+          example: "John"
+        lname:
+          type: "string"
+          example: "Doe"
+        email:
+          type: "string"
+          example: "john.doe@example.com"
+        age:
+          type: "integer"
+          example: 30
+        phone:
+          type: "string"
+          example: "123-456-7890"
+        nic:
+          type: "string"
+          example: "123456789"
+        gender:
+          type: "string"
+          example: "Male"
+        created_at:
+          type: "string"
+          format: "date-time"
+          example: "2023-01-01T00:00:00Z"
+
+    cargoRideWithConfirmation:
+      type: "object"
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        date:
+          type: string
+          format: date
+          example: "2024-07-01"
+        package_type:
+          type: string
+          example: "Electronics"
+        weight:
+          type: number
+          format: float
+          example: 150.0
+        height:
+          type: number
+          format: float
+          example: 1.5
+        length:
+          type: number
+          format: float
+          example: 2.0
+        width:
+          type: number
+          format: float
+          example: 1.0
+        truck_type:
+          type: string
+          example: "Flatbed"
+        location:
+          type: string
+          example: "New York, NY"
+        destination:
+          type: string
+          example: "Los Angeles, CA"
+        special_request:
+          type: boolean
+          example: false
+        driver_confirmation:
+          type: boolean
+          example: true
+
+    get_cargo_finder_details:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+        fname:
+          type: "string"
+        lname:
+          type: "string"
+        email:
+          type: "string"
+        age:
+          type: "integer"
+        phone:
+          type: "string"
+        nic:
+          type: "string"
+        gender:
+          type: "string"
+        verified:
+          type: "integer"
+        created:
+          type: "string"
+          format: "date-time"
+
+    adminReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        ride_id:
+          type: integer
+          format: int64
+          example: 100
+        rating:
+          type: integer
+          format: int64
+          example: 1
+        sender:
+          type: integer
+          format: int64
+          example: 123
+        receiver:
+          type: integer
+          format: int64
+          example: 456
+        title:
+          type: string
+          example: "Great service"
+        comment:
+          type: string
+          example: "The service was excellent and prompt."
+        date:
+          type: string
+          format: date-time
+          example: "2023-07-02T12:34:56Z"
